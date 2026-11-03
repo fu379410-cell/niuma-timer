@@ -1,0 +1,76 @@
+{
+  "name": "niuma-timer",
+  "productName": "牛马计时器",
+  "version": "1.0.0",
+  "description": "每一秒，都没有白忍。一个磨砂玻璃风格的打工人计薪与下班倒计时应用。",
+  "type": "module",
+  "private": true,
+  "main": "electron/main.cjs",
+  "author": "fu379410-cell",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test src/lib/*.test.mjs",
+    "desktop:dev": "electron .",
+    "desktop:pack": "npm run build && electron-builder --dir",
+    "desktop:dist": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder",
+    "icons": "node scripts/create-icon.mjs",
+    "format": "prettier --write src electron scripts index.html vite.config.js"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "electron": "45.2.1",
+    "electron-builder": "26.18.0",
+    "prettier": "^3.9.10",
+    "vite": "8.3.5"
+  },
+  "build": {
+    "appId": "io.github.fu379410-cell.niuma-timer",
+    "productName": "牛马计时器",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "identity": null
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "niuma-timer-${version}-windows-${arch}-setup.${ext}"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "fu379410-cell",
+      "repo": "niuma-timer"
+    },
+    "artifactName": "niuma-timer-${version}-${os}-${arch}.${ext}",
+    "portable": {
+      "artifactName": "niuma-timer-${version}-windows-${arch}-portable.${ext}"
+    },
+    "icon": "public/app-icon.png"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}
