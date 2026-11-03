@@ -1,4 +1,5 @@
 import './style.css';
+import packageInfo from '../package.json';
 import {
   defaultSettings,
   validateSettings,
@@ -116,7 +117,7 @@ function shell() {
     saved = !!localStorage.getItem(storageKey);
   } catch {}
   app.innerHTML = `<div class="ambient ambient-lime"></div><div class="ambient ambient-purple"></div><div class="ambient ambient-peach"></div>
- ${mini ? '' : `<aside class="sidebar glass"><a class="brand" href="#" aria-label="牛马计时器首页">${cow}<div><strong>NIUMA<span>®</span></strong><small>TIME TO GET PAID</small></div></a><div class="brand-cn">牛 马 计 时 器</div><nav aria-label="主要导航"><button data-nav="today" aria-label="今日搬砖" class="${view === 'today' ? 'active' : ''}">${icon('grid')}<span>今日搬砖</span><span class="nav-dot"></span></button><button data-nav="ledger" aria-label="牛马账本" class="${view === 'ledger' ? 'active' : ''}">${icon('wallet')}<span>牛马账本</span></button><button data-action="settings" aria-label="打工配置">${icon('settings')}<span>打工配置</span></button></nav><div class="sidebar-note"><span class="tiny-star">✳</span><p>上班可以，<br>上头不行。</p><small>YOU ARE MORE<br>THAN YOUR JOB.</small></div><a class="open-source" href="https://github.com/fu379410-cell/niuma-timer" target="_blank" rel="noreferrer">${icon('code')} 开源 · 牛马自由</a><div class="sidebar-version">LOCAL FIRST <span>v1.0.0</span></div></aside>`}
+ ${mini ? '' : `<aside class="sidebar glass"><a class="brand" href="#" aria-label="牛马计时器首页">${cow}<div><strong>NIUMA<span>®</span></strong><small>TIME TO GET PAID</small></div></a><div class="brand-cn">牛 马 计 时 器</div><nav aria-label="主要导航"><button data-nav="today" aria-label="今日搬砖" class="${view === 'today' ? 'active' : ''}">${icon('grid')}<span>今日搬砖</span><span class="nav-dot"></span></button><button data-nav="ledger" aria-label="牛马账本" class="${view === 'ledger' ? 'active' : ''}">${icon('wallet')}<span>牛马账本</span></button><button data-action="settings" aria-label="打工配置">${icon('settings')}<span>打工配置</span></button></nav><div class="sidebar-note"><span class="tiny-star">✳</span><p>上班可以，<br>上头不行。</p><small>YOU ARE MORE<br>THAN YOUR JOB.</small></div><a class="open-source" href="https://github.com/fu379410-cell/niuma-timer" target="_blank" rel="noreferrer">${icon('code')} 开源 · 牛马自由</a><div class="sidebar-version">LOCAL FIRST <span>v${packageInfo.version}</span></div></aside>`}
  <main class="${mini ? 'mini-main' : 'main'}"><header class="topbar"><div class="status"><i></i><span id="status-text"></span></div><span class="top-date" id="top-date"></span><time id="live-clock"></time><div class="top-actions">${demo ? '<button class="demo-badge" data-action="demo">演示模式 · 退出</button>' : '<span class="local-badge">本机计算 · 安心发财</span>'}<button class="icon-button privacy-button" data-action="privacy" title="隐藏或显示金额" aria-label="隐藏金额" aria-pressed="false">${icon('eye')}</button><button class="icon-button" data-action="${mini ? 'pin' : 'mini'}" title="${mini ? '窗口置顶' : '迷你悬浮窗'}" aria-label="${mini ? '窗口置顶' : '打开迷你悬浮窗'}">${icon(mini ? 'pin' : 'mini')}</button></div></header>
  ${mini ? miniContent() : view === 'ledger' ? ledgerContent() : todayContent()}
  ${mini ? '' : `<footer><span><i></i> 工资在涨，别让快乐掉线。</span><button data-action="method">计算口径 ${icon('info')}</button><span>MADE FOR EVERY HARDWORKING SOUL ↗</span></footer>`}</main>
@@ -224,8 +225,9 @@ function update() {
       .join('');
   }
   const day = n.toDateString();
-  if (lastDay && day !== lastDay) shell();
+  const dayChanged = lastDay && day !== lastDay;
   lastDay = day;
+  if (dayChanged) shell();
 }
 function drawSpark(d, n) {
   if (!document.querySelector('#spark-path')) return;
