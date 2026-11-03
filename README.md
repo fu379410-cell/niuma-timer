@@ -14,6 +14,8 @@
 
 奶油白、酸橙绿、磨砂玻璃，再配一只咖啡续命的小牛马。上班可以，上头不行。
 
+截图为明确标记的演示模式。支持主界面、[迷你窗](docs/screenshot-mini.png)、[牛马账本](docs/screenshot-ledger.png)和[打工配置](docs/screenshot-settings.png)。[验证范围](docs/VERIFICATION.md)包括 20 项计算测试、界面操作和 macOS 生产界面运行。
+
 ## 能做什么
 
 - **看收入慢慢上涨**：今日估算收入、每秒收入、时薪与工时进度，按本机时间实时更新。
