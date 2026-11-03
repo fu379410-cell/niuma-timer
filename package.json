@@ -18,7 +18,9 @@
     "desktop:dist": "npm run build && electron-builder",
     "dist": "npm run build && electron-builder",
     "icons": "node scripts/create-icon.mjs",
-    "format": "prettier --write src electron scripts index.html vite.config.js"
+    "format": "prettier --write src electron scripts index.html vite.config.js",
+    "desktop:install": "node scripts/install-desktop.mjs",
+    "icons:mac": "node scripts/create-macos-icon.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
@@ -45,7 +47,8 @@
         "dmg",
         "zip"
       ],
-      "identity": null
+      "identity": null,
+      "icon": "build/icon.icns"
     },
     "win": {
       "target": [

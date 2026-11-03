@@ -36,6 +36,8 @@
 
 社区构建尚未进行代码签名；macOS 构建也未经过 Apple 公证，首次打开可能遇到系统安全提示。Windows 安装包同样未签名。发布产物由 GitHub Actions 构建，不能据此视为所有平台均已完成真人实机验收。
 
+**放到桌面直接打开：** macOS 下载后可将完整的 `牛马计时器.app` 拖到桌面；从源码构建时也可使用下方安装命令。Windows 的 NSIS 安装版会创建桌面快捷方式。
+
 ## 本地运行
 
 需要 Node.js **22.12+**，推荐 Node.js 24。
@@ -76,7 +78,19 @@ npm run desktop:dev
 | `npm run build` | 构建浏览器界面到 `dist/` |
 | `npm run preview` | 预览已构建的浏览器界面 |
 | `npm run desktop:pack` | 生成当前平台的未安装桌面应用目录 |
+| `npm run desktop:install` | macOS 将本机已构建的完整应用复制到桌面 |
 | `npm run desktop:dist` | 生成当前平台安装包，输出到 `release/` |
+
+macOS 从源码生成并安装桌面应用：
+
+```bash
+npm run desktop:pack
+npm run desktop:install
+```
+
+安装后直接双击桌面的 `牛马计时器.app`，无需开发服务，也不依赖原项目目录。安装脚本仅复制已构建的应用，不会自动下载或重新构建。目标已存在时默认拒绝覆盖；更新时执行 `npm run desktop:install -- --replace`，旧应用会先保留为带时间戳的 `.backup-*.app`。可使用 `--target "/自定义/目标目录"` 指定安装目录。
+
+macOS 图标 `build/icon.icns` 已包含在仓库。修改图标后，可先执行 `npm run icons`，再在 Mac 上执行 `npm run icons:mac` 重新生成。
 
 ## 收入怎么算
 
