@@ -1,8 +1,10 @@
-const { app, BrowserWindow, ipcMain, Menu, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, shell, nativeTheme } = require('electron');
+const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 app.setName('牛马计时器');
+nativeTheme.themeSource = 'dark';
 
 const indexFile = path.join(__dirname, '..', 'dist', 'index.html');
 const development = !app.isPackaged && process.env.NIUMA_USE_DIST !== '1';
@@ -63,16 +65,48 @@ function protectWindow(window) {
   webContents.session.setPermissionCheckHandler(() => false);
 }
 
+function glassWindowOptions() {
+  if (process.platform === 'darwin') {
+    return {
+      transparent: true,
+      // Electron uses #AARRGGBB here: keep a 60% midnight tint over native blur.
+      backgroundColor: '#99131526',
+      vibrancy: 'under-window',
+      visualEffectState: 'active',
+      titleBarStyle: 'hiddenInset',
+      titleBarOverlay: true,
+      trafficLightPosition: { x: 20, y: 18 },
+    };
+  }
+  if (process.platform === 'win32') {
+    const [major, , build] = os.release().split('.').map(Number);
+    const supportsMaterial = major > 10 || (major === 10 && build >= 22621);
+    return {
+      // DWM supplies translucency for acrylic; avoid layered-window restrictions.
+      transparent: false,
+      backgroundColor: supportsMaterial ? '#99131526' : '#131526',
+      backgroundMaterial: supportsMaterial ? 'acrylic' : 'none',
+      titleBarStyle: 'hidden',
+      titleBarOverlay: {
+        color: '#131526',
+        symbolColor: '#F4F3FA',
+        height: 48,
+      },
+    };
+  }
+  return { backgroundColor: '#131526' };
+}
+
 async function createWindow(mini = false) {
   const window = new BrowserWindow({
     title: mini ? '牛马计时器 · 迷你模式' : '牛马计时器',
     icon: path.join(__dirname, '..', 'dist', 'app-icon.png'),
-    width: mini ? 380 : 1320,
-    height: mini ? 520 : 900,
-    minWidth: mini ? 340 : 940,
-    minHeight: mini ? 460 : 700,
+    width: mini ? 400 : 1340,
+    height: mini ? 640 : 920,
+    minWidth: mini ? 360 : 1000,
+    minHeight: mini ? 560 : 740,
     show: false,
-    backgroundColor: '#f3f2ec',
+    ...glassWindowOptions(),
     autoHideMenuBar: true,
     alwaysOnTop: mini,
     webPreferences: {

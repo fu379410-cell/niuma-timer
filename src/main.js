@@ -1,5 +1,7 @@
 import './style.css';
 import packageInfo from '../package.json';
+import { mountGoals } from './goals-ui.js';
+import { mountIncomeChart } from './income-chart.js';
 import {
   defaultSettings,
   validateSettings,
@@ -34,7 +36,6 @@ const paths = {
 };
 const icon = (name, cls = '') =>
   `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name] || paths.clock}"/></svg>`;
-const cow = `<svg viewBox="0 0 64 64" class="cow-logo" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 23-5-10 12 6m17 4 5-10-12 6M18 30c-6 0-7-7-5-9l10 4m23 5c6 0 7-7 5-9l-10 4M21 23c5-7 17-7 22 0l4 20c0 8-30 8-30 0Z M24 32h3m10 0h3m-13 9h1m8 0h1"/></svg>`;
 const app = document.querySelector('#app');
 const storageKey = 'niuma.settings.v1';
 function readSettings() {
@@ -55,8 +56,8 @@ let hidden = false,
   pinned = mini,
   quoteIndex = 0,
   toastTimeout,
-  lastDay = '',
-  selectedGoal = 0;
+  lastDay = '';
+let goalsController, chartController;
 let demoBase, openedAt;
 function resetDemoClock() {
   demoBase = new Date();
@@ -97,11 +98,6 @@ const statusCopy = {
   after: ['已下班 · 恢复人形', '今日搬砖已结束', '今日任务完成，生活现在开始。'],
   off: ['今天不营业', '休息日，理直气壮', '牛马也有草原，今天属于自己。'],
 };
-const goals = [
-  { name: '快乐水', price: 6, emoji: '🥤' },
-  { name: '续命咖啡', price: 25, emoji: '☕' },
-  { name: '下班大餐', price: 68, emoji: '🍜' },
-];
 function toast(text) {
   document.querySelector('#toast').textContent = text;
   document.querySelector('#toast').classList.add('visible');
@@ -112,33 +108,53 @@ function toast(text) {
   );
 }
 function shell() {
+  goalsController?.destroy();
+  chartController?.destroy();
+  goalsController = chartController = undefined;
   let saved = false;
   try {
     saved = !!localStorage.getItem(storageKey);
   } catch {}
-  app.innerHTML = `<div class="ambient ambient-lime"></div><div class="ambient ambient-purple"></div><div class="ambient ambient-peach"></div>
- ${mini ? '' : `<aside class="sidebar glass"><a class="brand" href="#" aria-label="牛马计时器首页">${cow}<div><strong>NIUMA<span>®</span></strong><small>TIME TO GET PAID</small></div></a><div class="brand-cn">牛 马 计 时 器</div><nav aria-label="主要导航"><button data-nav="today" aria-label="今日搬砖" class="${view === 'today' ? 'active' : ''}">${icon('grid')}<span>今日搬砖</span><span class="nav-dot"></span></button><button data-nav="ledger" aria-label="牛马账本" class="${view === 'ledger' ? 'active' : ''}">${icon('wallet')}<span>牛马账本</span></button><button data-action="settings" aria-label="打工配置">${icon('settings')}<span>打工配置</span></button></nav><div class="sidebar-note"><span class="tiny-star">✳</span><p>上班可以，<br>上头不行。</p><small>YOU ARE MORE<br>THAN YOUR JOB.</small></div><a class="open-source" href="https://github.com/fu379410-cell/niuma-timer" target="_blank" rel="noreferrer">${icon('code')} 开源 · 牛马自由</a><div class="sidebar-version">LOCAL FIRST <span>v${packageInfo.version}</span></div></aside>`}
- <main class="${mini ? 'mini-main' : 'main'}"><header class="topbar"><div class="status"><i></i><span id="status-text"></span></div><span class="top-date" id="top-date"></span><time id="live-clock"></time><div class="top-actions">${demo ? '<button class="demo-badge" data-action="demo">演示模式 · 退出</button>' : '<span class="local-badge">本机计算 · 安心发财</span>'}<button class="icon-button privacy-button" data-action="privacy" title="隐藏或显示金额" aria-label="隐藏金额" aria-pressed="false">${icon('eye')}</button><button class="icon-button" data-action="${mini ? 'pin' : 'mini'}" title="${mini ? '窗口置顶' : '迷你悬浮窗'}" aria-label="${mini ? '窗口置顶' : '打开迷你悬浮窗'}">${icon(mini ? 'pin' : 'mini')}</button></div></header>
- ${mini ? miniContent() : view === 'ledger' ? ledgerContent() : todayContent()}
- ${mini ? '' : `<footer><span><i></i> 工资在涨，别让快乐掉线。</span><button data-action="method">计算口径 ${icon('info')}</button><span>MADE FOR EVERY HARDWORKING SOUL ↗</span></footer>`}</main>
- <dialog id="settings-dialog" class="settings-dialog"><form id="settings-form" novalidate>${settingsForm()}</form></dialog>
- <dialog id="method-dialog" class="method-dialog glass"><button class="icon-button modal-close" data-action="close-method" aria-label="关闭计算说明">${icon('close')}</button><span class="eyebrow">THE MATH BEHIND THE MONEY</span><h2>每一分，都有个说法。</h2><p>日薪 = 月薪 ÷ 月计薪天数<br>时薪 = 日薪 ÷ 每日有效工作小时<br>今日已赚 = 日薪 × 已过有效工时比例</p><p>休息时段不计薪，下班后收入封顶。跨夜班次归属于上班当天。休息日不计薪，不自动计算加班费、税费、奖金和假期。</p><p><strong>月度与本周为排班估算：</strong>过往排班日按满勤补算，今天按实时进度计算。应用不会记录真实出勤；修改配置会重新估算本月全部数据。</p><p class="muted">所有时间跟随本机时区。默认月薪 ¥8,000、月计薪 21.75 天只是示例配置，可在「打工配置」中修改。</p><button type="button" class="primary-button" data-action="close-method">明白，继续发财 ${icon('arrow')}</button></dialog>`;
+  app.innerHTML = `<div class="ambient ambient-violet"></div><div class="ambient ambient-blue"></div><div class="ambient ambient-lime"></div><div class="window-texture"></div>
+  <div class="app-window ${mini ? 'mini-window' : ''}">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="牛马计时器首页"><img src="./app-icon.png" alt="疲惫的卡通牛马图标"/><div><strong>牛马计时器<span>®</span></strong><small>GET PAID. STAY HUMAN.</small></div></a>
+      ${mini ? '' : `<nav class="nav-tabs" aria-label="主要导航"><button data-nav="today" class="${view === 'today' ? 'active' : ''}">${icon('grid')} 搬砖现场</button><button data-nav="ledger" class="${view === 'ledger' ? 'active' : ''}">${icon('wallet')} 牛马账本</button></nav>`}
+      <div class="top-actions">${demo ? '<button class="demo-badge" data-action="demo">演示中 · 退出</button>' : ''}<button class="icon-button privacy-button" data-action="privacy" aria-label="${hidden ? '显示金额' : '隐藏金额'}" title="隐藏或显示金额" aria-pressed="${hidden}">${icon('eye')}</button><button class="icon-button" data-action="${mini ? 'pin' : 'mini'}" aria-label="${mini ? '窗口置顶' : '打开迷你悬浮窗'}" title="${mini ? '窗口置顶' : '迷你悬浮窗'}">${icon(mini ? 'pin' : 'mini')}</button>${mini ? '' : `<button class="icon-button" data-action="settings" aria-label="打工配置" title="打工配置">${icon('settings')}</button>`}</div>
+    </header>
+    <main class="${mini ? 'mini-main' : 'main'}">${mini ? miniContent() : view === 'ledger' ? ledgerContent() : todayContent()}
+      ${mini ? '' : `<footer><span>© ${new Date().getFullYear()} NIUMA · v${packageInfo.version} <i></i> 本机计算，快乐自定义。</span><button data-action="method">计算口径 ${icon('info')}</button><a href="https://github.com/fu379410-cell/niuma-timer" target="_blank" rel="noreferrer">${icon('code')} OPEN SOURCE</a></footer>`}
+    </main>
+  </div>
+  <dialog id="settings-dialog" class="settings-dialog"><form id="settings-form" novalidate>${settingsForm()}</form></dialog>
+  <dialog id="method-dialog" class="method-dialog glass"><button class="icon-button modal-close" data-action="close-method" aria-label="关闭计算说明">${icon('close')}</button><span class="eyebrow">THE MATH BEHIND THE MONEY</span><h2>每一分，都有个说法。</h2><p>日薪 = 月薪 ÷ 月计薪天数<br>时薪 = 日薪 ÷ 每日有效工作小时<br>今日已赚 = 日薪 × 已过有效工时比例</p><p>休息时段不计薪，下班后收入封顶。跨夜班次归属于上班当天。休息日不计薪，不自动计算加班费、税费、奖金和假期。</p><p><strong>月度与本周为排班估算：</strong>过往排班日按满勤补算，今天按实时进度计算。修改配置会重新估算本月全部数据。</p><p class="muted">趋势图按真实工时更新，午休与下班曲线保持平直。快乐目标金额为可修改的示例，仅保存在本机。</p><button type="button" class="primary-button" data-action="close-method">明白，继续发财 ${icon('arrow')}</button></dialog>`;
   app.classList.toggle('hide-money', hidden);
   app.classList.toggle('is-mini', mini);
   bind();
+  if (document.querySelector('#income-chart'))
+    chartController = mountIncomeChart(document.querySelector('#income-chart'), {
+      getSettings: () => settings,
+      getNow: now,
+    });
+  if (document.querySelector('#goals-root'))
+    goalsController = mountGoals(document.querySelector('#goals-root'), {
+      getIncome: () => getDaySummary(settings, now()),
+      mini,
+    });
   update();
   if (!saved && !mini && view === 'today')
     document.querySelector('.config-nudge')?.classList.add('show');
 }
 function todayContent() {
-  return `<section class="page-heading"><div><div class="eyebrow">ANOTHER DAY, ANOTHER PAYDAY.</div><h1>又是赚<span class="scribble">窝囊费</span>的一天<span class="heading-star">✳</span></h1><p>把班上明白，把钱看清楚。</p></div><button class="text-button config-nudge" data-action="settings">初始为示例配置 ${icon('arrow')}</button></section>
- <section class="hero-grid"><article class="earnings-card glass"><div class="card-top"><span>${icon('coins')} 今日已赚</span><span class="small-label">TODAY'S LITTLE VICTORY</span></div><div class="big-earning"><span class="currency">¥</span>${cash('today-amount', '0.00')}<span class="earning-dot"></span></div><div class="income-caption"><p id="quote">${quotes[quoteIndex]}</p><span class="rate-pill">↗ ${cash('second-rate', '¥0.0000')}<small> / 秒</small></span></div><div class="sparkline"><svg viewBox="0 0 600 110" preserveAspectRatio="none" role="img" aria-label="按有效工时计算的今日收入曲线"><defs><linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8e979" stop-opacity=".36"/><stop offset="100%" stop-color="#c8e979" stop-opacity="0"/></linearGradient></defs><path id="spark-area" fill="url(#spark-fill)"/><path id="spark-path" fill="none" stroke="#a9cc60" stroke-width="2.5"/><circle id="spark-dot" r="5" fill="#b9db71" stroke="white" stroke-width="3"/></svg><span>${settings.startTime}</span><span>${settings.endTime}</span></div><div class="goal-line"><span>今日小目标 <strong class="cash-value" id="daily-target"></strong></span><strong id="progress-label"></strong></div><div class="progress-track"><div id="main-progress"></div></div><button class="coffee-button" data-action="coffee">${icon('coffee')} 精神续杯，接着发财 <span>↗</span></button><div class="coffee-caption">不加班，不内耗，按时下班最重要。</div></article>
- <article class="mascot-card glass"><div class="mascot-scene"><span class="scene-id">EMPLOYEE OF THE MONTH<br><b>（并不想当）</b></span><img src="./mascot.png" class="mascot" alt="穿着紫色衬衫、歪领带，抱咖啡的疲惫牛马"/><div class="sticker">薪尽<br>自然凉<span>〰</span></div><span class="little-spark">✧</span></div><div class="countdown-section"><div class="countdown-label"><span></span><span id="countdown-label">距离下班还有</span><span></span></div><div class="countdown" id="countdown">00:00:00</div><p id="countdown-caption"></p></div><div class="shift-tag"><span id="shift-tag"></span><span>按时下班 · 拒绝感动自己</span></div></article></section>
- <section class="stats-grid"><article class="stat-card glass"><h2>${icon('clock')} 今日有效工时</h2><div class="stat-value" id="hours-worked"></div><div class="stat-bottom"><div class="progress-track small"><div id="hours-progress"></div></div><span id="total-hours"></span></div></article><button class="stat-card glass stat-link" data-nav="ledger"><h2>${icon('wallet')} 本月窝囊费 ${icon('arrow', 'trailing-icon')}</h2><div class="stat-value cash-value" id="month-amount"></div><div class="stat-bottom"><span class="soft-pill" id="month-days"></span><span>满勤估算</span></div></button><article class="stat-card glass"><h2>${icon('bolt')} 时薪身价</h2><div class="stat-value cash-value" id="hourly-rate"></div><div class="stat-bottom"><span>我的时间，很贵的。</span></div></article><article class="stat-card glass week-card"><h2>${icon('chart')} 本周搬砖 <span>估算</span></h2><div class="week-chart" id="week-chart"></div></article></section>
- <section class="survival-strip glass"><div class="survival-icon">${goals[selectedGoal].emoji}</div><div class="survival-copy"><strong id="goal-title"></strong><span id="goal-subtitle"></span></div><select id="goal-select" aria-label="选择快乐小目标">${goals.map((g, i) => `<option value="${i}" ${i === selectedGoal ? 'selected' : ''}>${g.name} · ¥${g.price}</option>`).join('')}</select><span class="strip-line"></span><span class="survival-footnote">工作只是生活的一部分。<b>你才是主角。</b></span></section>`;
+  return `<section class="page-heading"><div><div class="eyebrow">CLOCK IN. CASH OUT.</div><h1>钱在变多，<span>班在变少。</span><b>✳</b></h1></div><div class="heading-meta"><div class="status"><i></i><span id="status-text"></span></div><span id="top-date" class="top-date"></span><time id="live-clock"></time><button class="text-button config-nudge" data-action="settings">设置我的工资 ↗</button></div></section>
+  <section class="hero-grid">
+    <article class="earnings-card glass"><div class="card-top"><span>${icon('coins')} 今日已赚</span><span class="small-label">EVERY SECOND COUNTS.</span></div><div class="earning-row"><div class="big-earning"><span class="currency">¥</span>${cash('today-amount', '0.00')}</div><div class="rate-pill"><i></i>${cash('second-rate', '¥0.0000')}<small>/ 秒</small></div></div><p id="quote" class="income-quote">${quotes[quoteIndex]}</p><div id="income-chart"></div>
+    <div class="salary-metrics"><div><span>${icon('clock')} 今日工时</span><strong id="hours-worked"></strong><small id="total-hours"></small></div><button data-nav="ledger"><span>${icon('wallet')} 本月已赚 <em>估算</em></span><strong id="month-amount" class="cash-value"></strong></button><div><span>${icon('bolt')} 时薪身价</span><strong id="hourly-rate" class="cash-value"></strong></div></div><div class="goal-line"><span>今日目标 <b id="daily-target" class="cash-value"></b></span><span id="progress-label"></span></div><div class="progress-track"><div id="main-progress"></div></div></article>
+    <article class="mascot-card glass"><div class="character-headline"><span class="character-tag">工位常驻 NPC</span><span>ENERGY 1% · SALARY 100%</span></div><div class="mascot-scene"><div class="character-halo"></div><img class="mascot" src="./mascot-v2.png" alt="眼皮耷拉、顶着黑眼圈、领带松垮的疲惫卡通牛马"/><span class="character-sticker">薪尽<br>自然凉<span>✦</span></span><div class="character-whisper">精神离线，工资在线。</div></div><div class="countdown-box"><div class="countdown-label"><span id="countdown-label"></span><button class="recharge" data-action="coffee" aria-label="精神续杯" title="精神续杯">${icon('coffee')}</button></div><div class="countdown" id="countdown">00:00:00</div><p id="countdown-caption"></p><span id="shift-tag" class="shift-tag"></span></div></article>
+  </section><div id="goals-root"></div>`;
 }
 function miniContent() {
-  return `<div class="mini-brand">${cow}<strong>牛马计时器</strong><span>SMALL WINDOW, BIG DREAM.</span></div><div class="mini-hero glass"><img src="./mascot.png" alt="疲惫的小牛马"/><span class="eyebrow">今日已赚</span><div class="mini-cash">¥ ${cash('today-amount', '0.00')}</div><p id="quote">${quotes[0]}</p><div class="progress-track"><div id="main-progress"></div></div><div class="mini-count-label" id="countdown-label"></div><div id="countdown" class="countdown"></div><p id="countdown-caption"></p></div><button class="primary-button" data-action="settings">${icon('settings')} 打工配置</button>`;
+  return `<div class="mini-overview glass"><img class="mini-mascot" src="./mascot-v2.png" alt="疲惫的卡通牛马"/><div class="mini-income"><span class="eyebrow">今日已赚 · 每一秒都没有白忍</span><div class="mini-cash">¥ ${cash('today-amount', '0.00')}</div><div class="status"><i></i><span id="status-text"></span></div></div><div class="mini-divider"></div><div class="mini-countdown"><span id="countdown-label"></span><div id="countdown" class="countdown"></div><p id="countdown-caption"></p></div></div><div id="goals-root"></div><button class="mini-settings text-button" data-action="settings">${icon('settings')} 打工配置</button>`;
 }
 function ledgerContent() {
   const n = now(),
@@ -203,18 +219,8 @@ function update() {
     }
   set('month-days', `↗ 已完成 ${m.completedDays} 天`);
   set('hourly-rate', `¥${money(d.hourlyRate)}`);
-  const goal = goals[selectedGoal];
-  set(
-    'goal-title',
-    `今天的你，已经赚到 ${(d.earned / goal.price).toFixed(1)} ${goal.name === '下班大餐' ? '顿' : '杯'}${goal.name}。`
-  );
-  set(
-    'goal-subtitle',
-    d.earned >= goal.price
-      ? '给认真生活的自己，一点小小的奖励。'
-      : `再攒 ¥${money(Math.max(0, goal.price - d.earned))}，快乐就到账。`
-  );
-  drawSpark(d, n);
+  chartController?.update();
+  goalsController?.update();
   const chart = document.getElementById('week-chart');
   if (chart) {
     chart.innerHTML = getWeekSummary(settings, n)
@@ -228,27 +234,6 @@ function update() {
   const dayChanged = lastDay && day !== lastDay;
   lastDay = day;
   if (dayChanged) shell();
-}
-function drawSpark(d, n) {
-  if (!document.querySelector('#spark-path')) return;
-  const start = +d.startAt,
-    end = +d.endAt,
-    current = Math.min(Math.max(+n, start), end);
-  let points = [];
-  for (let i = 0; i <= 60; i++) {
-    const time = start + ((current - start) * i) / 60;
-    const s = getDaySummary(settings, new Date(time));
-    const y = 98 - s.progress * 84;
-    points.push([(i / 60) * ((current - start) / (end - start)) * 590 + 5, y]);
-  }
-  const path = points
-    .map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(2)},${p[1].toFixed(2)}`)
-    .join(' ');
-  document.querySelector('#spark-path').setAttribute('d', path);
-  const last = points.at(-1);
-  document.querySelector('#spark-area').setAttribute('d', `${path} L${last[0]},110 L5,110 Z`);
-  document.querySelector('#spark-dot').setAttribute('cx', last[0]);
-  document.querySelector('#spark-dot').setAttribute('cy', last[1]);
 }
 function bind() {
   app.querySelectorAll('[data-nav]').forEach((b) =>
@@ -267,11 +252,6 @@ function bind() {
     .forEach((b) => b.addEventListener('click', () => action(b.dataset.action)));
   app.querySelector('#settings-form').addEventListener('submit', saveSettings);
   app.querySelector('#break-enabled').addEventListener('change', toggleBreak);
-  app.querySelector('#goal-select')?.addEventListener('change', (e) => {
-    selectedGoal = Number(e.target.value);
-    document.querySelector('.survival-icon').textContent = goals[selectedGoal].emoji;
-    update();
-  });
   app.querySelectorAll('dialog').forEach((d) =>
     d.addEventListener('click', (e) => {
       if (e.target === d) {
@@ -330,7 +310,7 @@ async function action(type) {
     else {
       const url = new URL(location.href);
       url.searchParams.set('mini', '1');
-      const popup = window.open(url, 'niuma-mini', 'width=390,height=600');
+      const popup = window.open(url, 'niuma-mini', 'width=400,height=640');
       if (!popup) toast('请允许弹窗后打开迷你模式。');
     }
   } else if (type === 'pin') {
@@ -417,9 +397,11 @@ window.addEventListener('storage', (e) => {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) update();
 });
+document.body.classList.toggle('desktop', !!window.niumaDesktop);
 shell();
 if (window.niumaDesktop)
   window.niumaDesktop.getState().then((state) => {
     pinned = state.alwaysOnTop;
+    document.body.dataset.platform = state.platform;
   });
 setInterval(update, 1000);

@@ -1,7 +1,7 @@
 {
   "name": "niuma-timer",
   "productName": "牛马计时器",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "每一秒，都没有白忍。一个磨砂玻璃风格的打工人计薪与下班倒计时应用。",
   "type": "module",
   "private": true,

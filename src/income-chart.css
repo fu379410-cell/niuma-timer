@@ -1,0 +1,296 @@
+.income-chart {
+  --income-chart-lime: #dcf8a1;
+  color: #f4f2ff;
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  font-variant-numeric: tabular-nums;
+}
+.income-chart-header,
+.income-chart-heading,
+.income-chart-tabs,
+.income-chart-summary,
+.income-chart-summary > div,
+.income-chart-axis {
+  display: flex;
+  align-items: center;
+}
+.income-chart-header {
+  justify-content: space-between;
+  gap: 10px;
+}
+.income-chart-heading {
+  gap: 9px;
+  font-size: 11px;
+  font-weight: 550;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.income-chart-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 7px;
+  letter-spacing: 1.1px;
+  color: var(--income-chart-lime);
+}
+.income-chart-live i {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 50%;
+  box-shadow: 0 0 7px #dcf8a176;
+}
+.income-chart:not([data-status='working']) .income-chart-live {
+  color: #b4acc8;
+}
+.income-chart-tabs {
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid #d6ceff12;
+  background: #100f253b;
+  gap: 2px;
+}
+.income-chart-tabs button {
+  -webkit-app-region: no-drag;
+  border: 0;
+  border-radius: 5px;
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 9px;
+  color: #b6b2c9;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.income-chart-tabs button[aria-pressed='true'] {
+  color: #f0f2ec;
+  background: #e8e0ff14;
+  box-shadow: inset 0 1px 0 #f0eaff0b;
+}
+.income-chart-tabs button:focus-visible,
+.income-chart-svg:focus-visible {
+  outline: 2px solid #d6f49e;
+  outline-offset: 3px;
+}
+.income-chart-summary {
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  margin-bottom: 5px;
+  min-height: 27px;
+}
+.income-chart-summary > div {
+  gap: 8px;
+}
+.income-chart-summary [data-income-period] {
+  font-size: 9px;
+  color: #a7a4bd;
+}
+.income-chart-summary strong {
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--income-chart-lime);
+  letter-spacing: 0.3px;
+}
+.income-chart-summary [data-income-status] {
+  font-size: 8px;
+  letter-spacing: 0.4px;
+  color: #a9a3bd;
+  text-align: right;
+}
+.income-chart-visual {
+  position: relative;
+  min-width: 0;
+  height: 112px;
+  padding-top: 8px;
+  -webkit-app-region: no-drag;
+}
+.income-chart-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  touch-action: pan-y;
+}
+.income-chart-grid {
+  fill: none;
+  stroke: #d6d4ff12;
+  stroke-width: 1;
+  stroke-dasharray: 3 6;
+  vector-effect: non-scaling-stroke;
+}
+.income-chart-line,
+.income-chart-glow,
+.income-chart-flow {
+  fill: none;
+  stroke: var(--income-chart-lime);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.income-chart-line {
+  stroke-width: 1.8;
+}
+.income-chart-glow {
+  stroke-width: 6;
+  opacity: 0.08;
+  filter: blur(2px);
+}
+.income-chart-flow {
+  stroke: #f4ffdf;
+  stroke-width: 2.3;
+  stroke-dasharray: 5 95;
+  opacity: 0.55;
+  animation: income-chart-flow 9s linear infinite;
+}
+.income-chart:not([data-status='working']) .income-chart-flow {
+  animation: none;
+  opacity: 0;
+}
+.income-chart-dot {
+  fill: #e6ffb3;
+  stroke: #303847;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.income-chart-halo {
+  fill: #dcf8a124;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: income-chart-breathe 2.7s ease-out infinite;
+}
+.income-chart-scale {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: absolute;
+  left: 1px;
+  top: 8px;
+  bottom: 14px;
+  z-index: 1;
+  pointer-events: none;
+  color: #8d8aab;
+  font-size: 7px;
+  line-height: 1;
+}
+.income-chart-scale > span {
+  background: #20213540;
+  border-radius: 3px;
+  padding: 2px 3px;
+  backdrop-filter: blur(7px);
+}
+.income-chart-axis {
+  justify-content: space-between;
+  gap: 6px;
+  color: #9692ad;
+  font-size: 8px;
+  letter-spacing: 0.3px;
+  margin-top: 4px;
+  height: 13px;
+}
+.income-chart-axis [data-income-caption] {
+  font-size: 7px;
+  color: #7e7b98;
+  text-align: center;
+}
+.income-chart-hover-line {
+  stroke: #f0eaff50;
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+}
+.income-chart-hover-dot {
+  fill: #f5ffda;
+  stroke: #222838;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+}
+.income-chart-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  position: absolute;
+  z-index: 3;
+  transform: translateX(-50%);
+  min-width: 96px;
+  padding: 7px 10px;
+  border: 1px solid #e7ddff27;
+  border-radius: 9px;
+  background: #181927e8;
+  box-shadow: 0 6px 22px #0003;
+  backdrop-filter: blur(16px);
+  pointer-events: none;
+  opacity: 0;
+}
+.income-chart-tooltip time {
+  color: #b9b2cb;
+  font-size: 8px;
+}
+.income-chart-tooltip strong {
+  font-size: 11px;
+  font-weight: 550;
+  color: #e6f9c1;
+}
+.income-chart-inspecting .income-chart-hover-line,
+.income-chart-inspecting .income-chart-hover-dot,
+.income-chart-inspecting .income-chart-tooltip {
+  opacity: 1;
+}
+@keyframes income-chart-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(0.75);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(1.4);
+  }
+}
+@keyframes income-chart-flow {
+  to {
+    stroke-dashoffset: -400;
+  }
+}
+@media (max-width: 600px) {
+  .income-chart-heading {
+    font-size: 10px;
+    gap: 6px;
+  }
+  .income-chart-tabs button {
+    padding: 5px 7px;
+    font-size: 8px;
+  }
+  .income-chart-summary [data-income-status] {
+    font-size: 7px;
+  }
+  .income-chart-visual {
+    height: 105px;
+  }
+  .income-chart-axis {
+    font-size: 7px;
+  }
+  .income-chart-axis [data-income-caption] {
+    font-size: 6px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .income-chart-flow,
+  .income-chart-halo {
+    animation: none;
+  }
+}
+
+.income-chart-dot,
+.income-chart-halo {
+  transition: cy 0.85s linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .income-chart-dot,
+  .income-chart-halo {
+    transition: none;
+  }
+}

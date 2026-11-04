@@ -1,0 +1,14 @@
+# 2.0 图像设计记录
+
+使用内置 image_gen 生成。图标原始图保存在 `design/app-icon-v2.png`，运行时图标由 `npm run icons` 生成到 `public/app-icon.png`；macOS 图标由 `npm run icons:mac` 生成到 `build/icon.icns`。同一角色的透明立绘保存在 `public/mascot-v2.png`。
+
+## 满版疲惫牛马图标
+
++Use case: stylized-concept / app-icon
+Asset type: macOS and Windows application icon artwork, SQUARE 1024x1024, full bleed.
+Create a truly premium, humorous but tasteful original cartoon mascot app icon for Chinese application 牛马计时器. A single exhausted office "cow-horse" character: mainly a cute round horse face, short fluffy chestnut mane, two tiny creamy cow horns, big heavy half-lidded eyes with subtle dark eyebags, thick eyebrows, very unimpressed exhausted expression, warm tan and cream muzzle, tiny lavender shirt collar and loosened dark navy necktie at bottom. Character face/head is EXTREMELY LARGE, occupies 90-95% of square, cropped shoulders at edges and muzzle near lower edge; horn tips and mane almost touch top edge. Recognizable expressive face even at 32px. Sophisticated stylized cartoon animation character, clean bold sculpted shapes with controlled 2.5D cel shading, smooth satin lighting, subtle rimlight, editorial character design, rounded modern animated-film proportions. NOT a realistic horse, NOT a texture-heavy clay figure. Color background fills entire square: rich midnight periwinkle / indigo with restrained soft lavender studio glow, silky premium finish. The exhausted tan face dominates almost the entire canvas. NO tiny glyph, NO green badge, NO icon within another icon, NO outer frame, NO white squircle plate, NO visible desktop, NO text, NO letters, NO decorative logo. Do NOT bake rounded app icon corners; provide full opaque square artwork, OS adds clipping later. Incredibly well art-directed, emotionally relatable tired worker.
+
+## 同角色透明立绘
+
++Use case: identity-preserve / character asset
+Using the supplied tired cow-horse icon as the ONLY identity reference, create the same original exhausted cartoon office cow-horse as a standalone transparent-background waist-up bust. Preserve exactly the face, mane, little cow horns, dark eyebags, warm cream muzzle, lavender shirt and loosely knotted dark navy tie. He is resting one cheek on a hand, elbow down, half-lidded exhausted eyes, holding one tiny espresso cup in other hand. Premium animation-film cartoon sculpted 2.5D cel-shaded appearance, not photorealistic. Whole head including both horn tips and ears fully within frame. Character occupies 90% of canvas with minimal safe margins, generous wide bust composition 4:3. Purple and cyan rim lighting to match midnight blue glass UI. All background is genuinely transparent. NO desk, NO laptop, NO books, NO text, NO sticker, NO UI, NO extra character. One charismatic weary worker, sophisticated material and lighting, simple clean shape language.
