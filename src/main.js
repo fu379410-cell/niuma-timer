@@ -1,4 +1,6 @@
 import './style.css';
+import './themes.css';
+import { initTheme, themeControlMarkup } from './theme.js';
 import packageInfo from '../package.json';
 import { mountGoals } from './goals-ui.js';
 import { mountIncomeChart } from './income-chart.js';
@@ -36,6 +38,7 @@ const paths = {
 };
 const icon = (name, cls = '') =>
   `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name] || paths.clock}"/></svg>`;
+const themeController = initTheme();
 const app = document.querySelector('#app');
 const storageKey = 'niuma.settings.v1';
 function readSettings() {
@@ -120,7 +123,7 @@ function shell() {
     <header class="topbar">
       <a class="brand" href="#" aria-label="牛马计时器首页"><img src="./app-icon.png" alt="疲惫的卡通牛马图标"/><div><strong>牛马计时器<span>®</span></strong><small>GET PAID. STAY HUMAN.</small></div></a>
       ${mini ? '' : `<nav class="nav-tabs" aria-label="主要导航"><button data-nav="today" class="${view === 'today' ? 'active' : ''}">${icon('grid')} 搬砖现场</button><button data-nav="ledger" class="${view === 'ledger' ? 'active' : ''}">${icon('wallet')} 牛马账本</button></nav>`}
-      <div class="top-actions">${demo ? '<button class="demo-badge" data-action="demo">演示中 · 退出</button>' : ''}<button class="icon-button privacy-button" data-action="privacy" aria-label="${hidden ? '显示金额' : '隐藏金额'}" title="隐藏或显示金额" aria-pressed="${hidden}">${icon('eye')}</button><button class="icon-button" data-action="${mini ? 'pin' : 'mini'}" aria-label="${mini ? '窗口置顶' : '打开迷你悬浮窗'}" title="${mini ? '窗口置顶' : '迷你悬浮窗'}">${icon(mini ? 'pin' : 'mini')}</button>${mini ? '' : `<button class="icon-button" data-action="settings" aria-label="打工配置" title="打工配置">${icon('settings')}</button>`}</div>
+      <div class="top-actions">${themeControlMarkup()}${demo ? '<button class="demo-badge" data-action="demo">演示中 · 退出</button>' : ''}<button class="icon-button privacy-button" data-action="privacy" aria-label="${hidden ? '显示金额' : '隐藏金额'}" title="隐藏或显示金额" aria-pressed="${hidden}">${icon('eye')}</button><button class="icon-button" data-action="${mini ? 'pin' : 'mini'}" aria-label="${mini ? '窗口置顶' : '打开迷你悬浮窗'}" title="${mini ? '窗口置顶' : '迷你悬浮窗'}">${icon(mini ? 'pin' : 'mini')}</button>${mini ? '' : `<button class="icon-button" data-action="settings" aria-label="打工配置" title="打工配置">${icon('settings')}</button>`}</div>
     </header>
     <main class="${mini ? 'mini-main' : 'main'}">${mini ? miniContent() : view === 'ledger' ? ledgerContent() : todayContent()}
       ${mini ? '' : `<footer><span>© ${new Date().getFullYear()} NIUMA · v${packageInfo.version} <i></i> 本机计算，快乐自定义。</span><button data-action="method">计算口径 ${icon('info')}</button><a href="https://github.com/fu379410-cell/niuma-timer" target="_blank" rel="noreferrer">${icon('code')} OPEN SOURCE</a></footer>`}
@@ -131,6 +134,7 @@ function shell() {
   app.classList.toggle('hide-money', hidden);
   app.classList.toggle('is-mini', mini);
   bind();
+  themeController.bindControls(app);
   if (document.querySelector('#income-chart'))
     chartController = mountIncomeChart(document.querySelector('#income-chart'), {
       getSettings: () => settings,
@@ -397,6 +401,7 @@ window.addEventListener('storage', (e) => {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) update();
 });
+window.addEventListener('niuma-theme-error', () => toast('主题暂未保存，请再试一次。'));
 document.body.classList.toggle('desktop', !!window.niumaDesktop);
 shell();
 if (window.niumaDesktop)

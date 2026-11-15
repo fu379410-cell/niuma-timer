@@ -1,10 +1,10 @@
 const { app, BrowserWindow, ipcMain, Menu, shell, nativeTheme } = require('electron');
+const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 app.setName('牛马计时器');
-nativeTheme.themeSource = 'dark';
 
 const indexFile = path.join(__dirname, '..', 'dist', 'index.html');
 const development = !app.isPackaged && process.env.NIUMA_USE_DIST !== '1';
@@ -12,6 +12,69 @@ const devURL = 'http://localhost:5173/';
 const fileURL = pathToFileURL(indexFile);
 let mainWindow;
 let miniWindow;
+const themePreferences = new Set(['light', 'dark', 'system']);
+let themePreference = 'system';
+let themeInitialized = false;
+let themeWriteQueue = Promise.resolve();
+
+function themeSnapshot() {
+  return {
+    preference: themePreference,
+    resolved: nativeTheme.shouldUseDarkColors ? 'dark' : 'light',
+  };
+}
+
+function themePalette() {
+  return nativeTheme.shouldUseDarkColors
+    ? { tint: '#99131526', solid: '#131526', symbol: '#F4F3FA' }
+    : { tint: '#B3F6F4EC', solid: '#F6F4EC', symbol: '#292B36' };
+}
+
+async function initializeTheme() {
+  try {
+    const value = JSON.parse(
+      await fs.readFile(path.join(app.getPath('userData'), 'theme.json'), 'utf8')
+    );
+    if (themePreferences.has(value?.preference)) themePreference = value.preference;
+  } catch (error) {
+    if (error.code !== 'ENOENT')
+      console.warn('Theme preference unavailable; following system appearance.');
+  }
+  nativeTheme.themeSource = themePreference;
+  themeInitialized = true;
+}
+
+async function persistTheme(preference) {
+  const directory = app.getPath('userData');
+  const destination = path.join(directory, 'theme.json');
+  const temporary = path.join(directory, `theme.json.${process.pid}.tmp`);
+  await fs.mkdir(directory, { recursive: true });
+  try {
+    await fs.writeFile(temporary, `${JSON.stringify({ preference })}\n`, { mode: 0o600 });
+    await fs.rename(temporary, destination);
+  } finally {
+    await fs.unlink(temporary).catch((error) => {
+      if (error.code !== 'ENOENT') console.warn('Unable to remove temporary theme preference.');
+    });
+  }
+}
+
+function notifyTheme(window) {
+  if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
+    window.webContents.send('niuma:theme-changed', themeSnapshot());
+  }
+}
+
+function applyThemeToWindows() {
+  const options = glassWindowOptions();
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (window.isDestroyed()) continue;
+    window.setBackgroundColor(options.backgroundColor);
+    if (process.platform === 'win32') window.setTitleBarOverlay(options.titleBarOverlay);
+    // macOS nativeTheme updates the native appearance of vibrancy and traffic lights.
+    notifyTheme(window);
+  }
+}
 
 function isAppDocument(value) {
   try {
@@ -66,11 +129,12 @@ function protectWindow(window) {
 }
 
 function glassWindowOptions() {
+  const palette = themePalette();
   if (process.platform === 'darwin') {
     return {
       transparent: true,
-      // Electron uses #AARRGGBB here: keep a 60% midnight tint over native blur.
-      backgroundColor: '#99131526',
+      // Electron uses #AARRGGBB: tinted native blur keeps both themes readable.
+      backgroundColor: palette.tint,
       vibrancy: 'under-window',
       visualEffectState: 'active',
       titleBarStyle: 'hiddenInset',
@@ -84,17 +148,17 @@ function glassWindowOptions() {
     return {
       // DWM supplies translucency for acrylic; avoid layered-window restrictions.
       transparent: false,
-      backgroundColor: supportsMaterial ? '#99131526' : '#131526',
+      backgroundColor: supportsMaterial ? palette.tint : palette.solid,
       backgroundMaterial: supportsMaterial ? 'acrylic' : 'none',
       titleBarStyle: 'hidden',
       titleBarOverlay: {
-        color: '#131526',
-        symbolColor: '#F4F3FA',
+        color: palette.solid,
+        symbolColor: palette.symbol,
         height: 48,
       },
     };
   }
-  return { backgroundColor: '#131526' };
+  return { backgroundColor: palette.solid };
 }
 
 async function createWindow(mini = false) {
@@ -121,6 +185,7 @@ async function createWindow(mini = false) {
   });
   protectWindow(window);
   window.once('ready-to-show', () => window.show());
+  window.webContents.on('did-finish-load', () => notifyTheme(window));
   window.webContents.on('did-fail-load', (_event, code, description) => {
     if (code !== -3) console.error(`Unable to load 牛马计时器: ${description} (${code})`);
   });
@@ -187,7 +252,26 @@ function registerDesktopAPI() {
       alwaysOnTop: window.isAlwaysOnTop(),
       mini: window === miniWindow,
       platform: process.platform,
+      themePreference,
+      resolvedTheme: themeSnapshot().resolved,
     };
+  });
+  ipcMain.handle('niuma:set-theme', (event, preference) => {
+    requireAppWindow(event);
+    if (!themePreferences.has(preference))
+      throw new TypeError('Expected light, dark or system theme.');
+    // Serialize multiple windows' writes so disk and native appearance stay in order.
+    const update = themeWriteQueue
+      .catch(() => {})
+      .then(async () => {
+        await persistTheme(preference);
+        themePreference = preference;
+        nativeTheme.themeSource = preference;
+        applyThemeToWindows();
+        return themeSnapshot();
+      });
+    themeWriteQueue = update;
+    return update;
   });
 }
 
@@ -200,7 +284,7 @@ if (!app.requestSingleInstanceLock()) {
       if (window.isMinimized()) window.restore();
       window.show();
       window.focus();
-    } else if (app.isReady()) {
+    } else if (app.isReady() && themeInitialized) {
       void createWindow();
     }
   });
@@ -208,6 +292,8 @@ if (!app.requestSingleInstanceLock()) {
     .whenReady()
     .then(async () => {
       if (process.platform !== 'darwin') Menu.setApplicationMenu(null);
+      await initializeTheme();
+      nativeTheme.on('updated', applyThemeToWindows);
       registerDesktopAPI();
       await createWindow();
       app.on('activate', () => {

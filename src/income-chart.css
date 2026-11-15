@@ -294,3 +294,98 @@
     transition: none;
   }
 }
+
+/* Light theme retains the live chart with a clear olive trace on pale glass. */
+html[data-theme='light'] .income-chart {
+  --income-chart-lime: #607c2d;
+  color: #344054;
+}
+html[data-theme='light'] .income-chart-live i {
+  box-shadow: 0 0 7px #789b3a40;
+}
+html[data-theme='light'] .income-chart:not([data-status='working']) .income-chart-live {
+  color: #7a6a8d;
+}
+html[data-theme='light'] .income-chart-tabs {
+  background: #e6e1ef70;
+  border-color: #b0a5c333;
+  box-shadow: inset 0 1px 0 #ffffff80;
+}
+html[data-theme='light'] .income-chart-tabs button {
+  color: #6a6e83;
+}
+html[data-theme='light'] .income-chart-tabs button:hover {
+  color: #4f405e;
+  background: #ffffff8c;
+}
+html[data-theme='light'] .income-chart-tabs button[aria-pressed='true'] {
+  color: #405720;
+  background: #ffffffd6;
+  box-shadow:
+    0 1px 4px #64577114,
+    inset 0 1px 0 #fff;
+}
+html[data-theme='light'] .income-chart-tabs button:focus-visible,
+html[data-theme='light'] .income-chart-svg:focus-visible {
+  outline-color: #708840;
+}
+html[data-theme='light'] .income-chart-summary [data-income-period],
+html[data-theme='light'] .income-chart-summary [data-income-status] {
+  color: #657086;
+}
+html[data-theme='light'] .income-chart-grid {
+  stroke: #8e82a72e;
+}
+html[data-theme='light'] .income-chart-glow {
+  opacity: 0.1;
+}
+html[data-theme='light'] .income-chart-flow {
+  stroke: #a0bd59;
+  opacity: 0.8;
+}
+html[data-theme='light'] .income-chart:not([data-status='working']) .income-chart-flow {
+  opacity: 0;
+}
+html[data-theme='light'] .income-chart-svg linearGradient stop {
+  stop-color: #9dbb60;
+}
+html[data-theme='light'] .income-chart-dot {
+  fill: #75963b;
+  stroke: #fcfff5;
+}
+html[data-theme='light'] .income-chart-halo {
+  fill: #8aa74d2e;
+}
+html[data-theme='light'] .income-chart-scale {
+  color: #6a6980;
+}
+html[data-theme='light'] .income-chart-scale > span {
+  background: #faf7fdad;
+  box-shadow: 0 0 4px #faf7fd4d;
+}
+html[data-theme='light'] .income-chart-axis {
+  color: #657086;
+}
+html[data-theme='light'] .income-chart-axis [data-income-caption] {
+  color: #706a83;
+}
+html[data-theme='light'] .income-chart-hover-line {
+  stroke: #8a789a73;
+}
+html[data-theme='light'] .income-chart-hover-dot {
+  fill: #668631;
+  stroke: #fcfff5;
+}
+html[data-theme='light'] .income-chart-tooltip {
+  background: #fffdf6ed;
+  border-color: #d4c9e4b3;
+  box-shadow:
+    0 6px 22px #69517926,
+    inset 0 1px 0 #fff;
+}
+html[data-theme='light'] .income-chart-tooltip time {
+  color: #73657f;
+}
+html[data-theme='light'] .income-chart-tooltip strong {
+  color: #526c29;
+}
